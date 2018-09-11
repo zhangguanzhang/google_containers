@@ -15,7 +15,6 @@ Multi_process_init() {
 }
 
 
-
 #  GCR_IMAGE_NAME  tag  REPO_IMAGE_NAME
 image_tag(){
     docker pull $1:$2
@@ -29,17 +28,10 @@ img_clean(){
     done < <(docker images --format {{.Repository}}' '{{.Tag}})
 }
 
-google_name(){
-    gcloud container images list --repository=$@ --format="value(NAME)"
-}
 google_tag(){
 #    gcloud container images list-tags $@  --format="get(TAGS)" --filter='tags:*' | sed 's#;#\n#g'
     curl -ks -XGET https://gcr.io/v2/${@#*/}/tags/list | jq -r .tags[]
 }
-google_latest_digest(){
-    gcloud container images list-tags --format='get(DIGEST)' $@ --filter="tags=latest"
-}
-
 
 
 image_pull(){
@@ -56,7 +48,8 @@ image_pull(){
     MY_REPO_IMAGE_NAME=${Prefix}${image_name}
     while read tag;do
     #处理latest标签
-        [[ $(df -h| awk  '$NF=="/"{print +$5}') -ge "$max_per" || -n $(sync_commit_check) ]] && { wait;img_clean $domain $namespace $image_name ; }
+    echo $tag
+        [ "$(docker images|wc -l)" -ge 5 ] && { wait;img_clean $domain $namespace $image_name ; }
         [[ "$(hub_tag_exist $MY_REPO_IMAGE_NAME $tag)" == 'null' ]] && continue
         read -u5
         {
@@ -69,33 +62,17 @@ image_pull(){
 
 }
 
-sync_commit_check(){
-    [[ $(( (`date +%s` - start_time)/60 )) -gt 40 || -n "$(docker images | awk '$NF~"GB"')" ]] &&
-        echo ture || false
-}
-
 # img_name tag
 hub_tag_exist(){
     curl -s https://hub.docker.com/v2/repositories/${MY_REPO}/$1/tags/$2/ | jq -r .name
 }
 
 
-trvis_live(){
-    [ $(( (`date +%s` - live_start_time)/60 )) -ge 8 ] && { live_start_time=$(date +%s);echo 'for live in the travis!'; }
-}
-
-
 main(){
-
-    Multi_process_init $(( max_process * 4 ))
-    live_start_time=$(date +%s)
-
-    exec 5>&-;exec 5<&-
 
     Multi_process_init $max_process
 
     image_pull gcr.io/cloud-datalab google
-
 
     exec 5>&-;exec 5<&-
 }

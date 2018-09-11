@@ -14,10 +14,10 @@ install:
 script:
 - bash -x ./sync.sh 3
 before_install:
-- openssl aes-256-cbc -K $encrypted_adb29550dbbe_key -iv $encrypted_adb29550dbbe_iv
-  -in conf.tar.gz.enc -out conf.tar.gz -d
 - mkdir -p ~/.ssh
 - mkdir -p ~/.docker
+- openssl aes-256-cbc -K $encrypted_adb29550dbbe_key -iv $encrypted_adb29550dbbe_iv
+  -in .travis/conf.tar.gz.enc -out ~/conf.tar.gz -d
 - tar zxf ~/conf.tar.gz -C ~
 - chmod 600 ~/.ssh/id_rsa
 - chmod 600 ~/.docker/config.json

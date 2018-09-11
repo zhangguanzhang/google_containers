@@ -12,7 +12,7 @@ branches:
 install:
 - git remote -v
 script:
-- bash -x ./sync.sh
+- bash -x ./sync.sh 3
 before_install:
 - mkdir -p ~/.ssh
 - mkdir -p ~/.docker
@@ -24,3 +24,4 @@ before_install:
 - eval $(ssh-agent)
 - ssh-add ~/.ssh/id_rsa
 - df -h
+- ls -al ~

@@ -15,51 +15,6 @@ Multi_process_init() {
 }
 
 
-add_yum_repo() {
-cat > /etc/yum.repos.d/google-cloud-sdk.repo <<EOF
-[google-cloud-sdk]
-name=Google Cloud SDK
-baseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el7-x86_64
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOF
-}
-
-add_apt_source(){
-    export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
-    echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-}
-
-install_sdk() {
-    local OS_VERSION=$(grep -Po '(?<=^ID=")\w+' /etc/os-release)
-    local OS_VERSION=${OS_VERSION:-ubuntu}
-    if [[ $OS_VERSION =~ "centos" ]];then
-        if ! [ -f /etc/yum.repos.d/google-cloud-sdk.repo ];then
-            add_yum_repo
-            yum -y install google-cloud-sdk
-        else
-            echo "gcloud is installed"
-        fi
-    elif [[ $OS_VERSION =~ "ubuntu" ]];then
-        if ! [ -f /etc/apt/sources.list.d/google-cloud-sdk.list ];then
-            add_apt_source
-            sudo apt-get -y update && sudo apt-get -y install google-cloud-sdk
-        else
-             echo "gcloud is installed"
-        fi
-    fi
-}
-
-auth_sdk(){
-    local AUTH_COUNT=$(gcloud auth list --format="get(account)"|wc -l)
-    [ "$AUTH_COUNT" -eq 0 ] && gcloud auth activate-service-account --key-file=$HOME/gcloud.config.json ||
-        echo "gcloud service account is exsits"
-}
-
 
 #  GCR_IMAGE_NAME  tag  REPO_IMAGE_NAME
 image_tag(){
@@ -78,7 +33,8 @@ google_name(){
     gcloud container images list --repository=$@ --format="value(NAME)"
 }
 google_tag(){
-    gcloud container images list-tags $@  --format="get(TAGS)" --filter='tags:*' | sed 's#;#\n#g'
+#    gcloud container images list-tags $@  --format="get(TAGS)" --filter='tags:*' | sed 's#;#\n#g'
+    curl -ks -XGET https://gcr.io/v2/${@#*/}/tags/list | jq -r .tags[]
 }
 google_latest_digest(){
     gcloud container images list-tags --format='get(DIGEST)' $@ --filter="tags=latest"
@@ -130,8 +86,7 @@ trvis_live(){
 
 
 main(){
-    install_sdk
-    auth_sdk
+
     Multi_process_init $(( max_process * 4 ))
     live_start_time=$(date +%s)
 

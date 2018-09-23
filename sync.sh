@@ -43,7 +43,7 @@ image_pull(){
     Prefix=$domain$interval$namespace$interval
     # REPOSITORY is the name of the dir,convert the '/' to '.',and cut the last '.'
 
-    SYNC_IMAGE_NAME=gcr.io/cloud-datalab/datalab
+    SYNC_IMAGE_NAME=gcr.io/cloud-datalab/datalab-gateway
     image_name=${SYNC_IMAGE_NAME##*/}
     MY_REPO_IMAGE_NAME=${Prefix}${image_name}
     while read tag;do

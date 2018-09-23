@@ -49,7 +49,7 @@ image_pull(){
     while read tag;do
     #处理latest标签
     echo $tag
-        [ "$(docker images|wc -l)" -ge 5 ] && { wait;img_clean $domain $namespace $image_name ; }
+        [ "$(docker images|wc -l)" -ge 2 ] && { wait;img_clean $domain $namespace $image_name ; }
         [[ "$(hub_tag_exist $MY_REPO_IMAGE_NAME $tag)" == 'null' ]] && continue
         read -u5
         {

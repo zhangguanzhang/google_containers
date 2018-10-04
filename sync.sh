@@ -56,7 +56,8 @@ image_pull(){
             [ -n "$tag" ] && image_tag $SYNC_IMAGE_NAME $tag $MY_REPO/$MY_REPO_IMAGE_NAME
             echo >&5
         }&
-    done < <($@_tag $SYNC_IMAGE_NAME | shuf)
+#    done < <($@_tag $SYNC_IMAGE_NAME | shuf)
+#    done < <(shut tag)
     wait
     img_clean $domain $namespace $image_name 
 

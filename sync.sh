@@ -46,6 +46,7 @@ image_pull(){
     SYNC_IMAGE_NAME=gcr.io/cloud-datalab/datalab-gateway
     image_name=${SYNC_IMAGE_NAME##*/}
     MY_REPO_IMAGE_NAME=${Prefix}${image_name}
+    shuf tag > shuf_tag
     while read tag;do
     #处理latest标签
     echo $tag
@@ -57,7 +58,7 @@ image_pull(){
             echo >&5
         }&
 #    done < <($@_tag $SYNC_IMAGE_NAME | shuf)
-    done < <(shuf tag)
+    done < shuf_tag
     wait
     img_clean $domain $namespace $image_name 
 

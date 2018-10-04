@@ -57,7 +57,7 @@ image_pull(){
             echo >&5
         }&
 #    done < <($@_tag $SYNC_IMAGE_NAME | shuf)
-#    done < <(shuf tag)
+    done < <(shuf tag)
     wait
     img_clean $domain $namespace $image_name 
 

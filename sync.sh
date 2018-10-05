@@ -52,7 +52,7 @@ image_pull(){
         [ "$(docker images|wc -l)" -ge 2 ] && img_clean $domain $namespace $image_name
         [[ "$(hub_tag_exist $MY_REPO_IMAGE_NAME $tag)" == 'null' ]] && continue
         [ -n "$tag" ] && image_tag $SYNC_IMAGE_NAME $tag $MY_REPO/$MY_REPO_IMAGE_NAME
-    done < <(shuf tag)
+    done < <(tac tag)
     wait
     img_clean $domain $namespace $image_name 
 

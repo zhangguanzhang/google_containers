@@ -36,7 +36,7 @@ google_tag(){
 
 image_pull(){
     SYNC_IMAGE_NAME=$1
-    echo 'Sync the '$REPOSITORY
+    echo 'Sync the '$SYNC_IMAGE_NAME
     shift
     read domain namespace img_name < <(tr / ' '<<<$SYNC_IMAGE_NAME)
     hub_img_name=$MY_REPO/$(tr / $interval <<<$SYNC_IMAGE_NAME)
@@ -55,7 +55,7 @@ image_pull(){
 
 # img_name tag
 hub_tag_exist(){
-    curl -s https://hub.docker.com/v2/repositories/${MY_REPO}/$1/tags/$2/ | jq -r .name
+    curl -s https://hub.docker.com/v2/repositories/$1/tags/$2/ | jq -r .name
 }
 
 

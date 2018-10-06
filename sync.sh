@@ -5,6 +5,7 @@ interval=.
 max_per=70
 #--------------------------
 
+
 Multi_process_init() {
     trap 'exec 5>&-;exec 5<&-;exit 0' 2
     pipe=`mktemp -u tmp.XXXX`

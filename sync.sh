@@ -23,35 +23,30 @@ image_tag(){
 }
 
 img_clean(){
+    local img tag
     while read img tag;do
         docker push $img:$tag;docker rmi $img:$tag;
     done < <(docker images --format {{.Repository}}' '{{.Tag}})
 }
 
 google_tag(){
-#    gcloud container images list-tags $@  --format="get(TAGS)" --filter='tags:*' | sed 's#;#\n#g'
     curl -ks -XGET https://gcr.io/v2/${@#*/}/tags/list | jq -r .tags[]
 }
 
 
 image_pull(){
-    REPOSITORY=$1
+    SYNC_IMAGE_NAME=$1
     echo 'Sync the '$REPOSITORY
     shift
-    domain=${REPOSITORY%%/*}
-    namespace=${REPOSITORY##*/}
-    Prefix=$domain$interval$namespace$interval
+    read domain namespace img_name < <(tr / ' '<<<$SYNC_IMAGE_NAME)
+    hub_img_name=$MY_REPO/$(tr / $interval <<<$SYNC_IMAGE_NAME)
     # REPOSITORY is the name of the dir,convert the '/' to '.',and cut the last '.'
 
-    SYNC_IMAGE_NAME=gcr.io/cloud-datalab/datalab-gateway
-    image_name=${SYNC_IMAGE_NAME##*/}
-    MY_REPO_IMAGE_NAME=${Prefix}${image_name}
     while read tag;do
-    #处理latest标签
     echo $tag
-        [ "$(docker images|wc -l)" -ge 2 ] && img_clean $domain $namespace $image_name
-        [[ "$(hub_tag_exist $MY_REPO_IMAGE_NAME $tag)" == 'null' ]] && continue
-        [ -n "$tag" ] && image_tag $SYNC_IMAGE_NAME $tag $MY_REPO/$MY_REPO_IMAGE_NAME
+        [ "$(docker images|wc -l)" -ge 2 ] && img_clean
+        [[ "$(hub_tag_exist $hub_img_name $tag)" != 'null' ]] && continue
+        [ -n "$tag" ] && image_tag $SYNC_IMAGE_NAME $tag $hub_img_name
     done < <(shuf tag)
     wait
     img_clean $domain $namespace $image_name 
@@ -68,10 +63,9 @@ main(){
 
     Multi_process_init $max_process
 
-    image_pull gcr.io/cloud-datalab google
+    image_pull gcr.io/cloud-datalab/datalab-gateway
 
     exec 5>&-;exec 5<&-
 }
 
-main
-
+main 

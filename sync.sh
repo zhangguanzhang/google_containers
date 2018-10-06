@@ -52,7 +52,7 @@ image_pull(){
         [ "$(docker images|wc -l)" -ge 2 ] && img_clean $domain $namespace $image_name
         [[ "$(hub_tag_exist $MY_REPO_IMAGE_NAME $tag)" == 'null' ]] && continue
         [ -n "$tag" ] && image_tag $SYNC_IMAGE_NAME $tag $MY_REPO/$MY_REPO_IMAGE_NAME
-    done < <(tac tag)
+    done < <(shuf tag)
     wait
     img_clean $domain $namespace $image_name 
 
@@ -74,58 +74,4 @@ main(){
 }
 
 main
-
-
-
-
-
-hub_tag_exist(){
-    curl -s https://hub.docker.com/v2/repositories/zhangguanzhang/gcr.io.cloud-datalab.datalab/tags/$1/ | jq -r .name
-}
-
-ArrayOS-Rel_AG-1 dmz 192.168.2.248 inside 192.168.0.248
-ArrayOS-Rel_AG-2 dmz 192.168.2.249 inside 192.168.0.249
-ArrayOS-Rel_APV outside 192.168.1.250 dmz 192.168.2.250
-
-
-google::name(){
-    gcloud container images list --repository=$@ --format="value(NAME)"
-}
-
-
-pr(){
-    echo $dir:$1 > $dir/$1
-
-}
-dir=gcr.io/gcr.io/cloud-datalab/datalab-gateway
-
-Multi_process_init() {
-    trap 'exec 5>&-;exec 5<&-;exit 0' 2
-    pipe=`mktemp -u tmp.XXXX`
-    mkfifo $pipe
-    exec 5<>$pipe
-    rm -f $pipe
-    seq $1 >&5
-}
-
-pr(){
-    [[ "$(curl -s https://hub.docker.com/v2/repositories/zhangguanzhang/gcr.io.cloud-datalab.datalab-gateway/tags/$1/ | jq -r .name)" == null ]] && echo $1 >>newtag
-}
-
-
-
-
-
-
-Multi_process_init 40
-
-while read tag;do
-    [ -f $dir/$tag ] && continue
-    read -u5
-    {
-        [[ -n "$tag" ]] && pr $tag
-        echo >&5
-    }&
-done < tag
-wait
 

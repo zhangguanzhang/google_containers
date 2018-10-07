@@ -64,7 +64,7 @@ main(){
 
     Multi_process_init $max_process
 
-    image_pull gcr.io/cloud-datalab/datalab-gateway
+    image_pull gcr.io/cloud-datalab/datalab-gpu
 
     exec 5>&-;exec 5<&-
 }

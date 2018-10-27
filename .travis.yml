@@ -1,27 +1,46 @@
-sudo: required
-language: python
-python:
-- '2.7'
+language: go
+
+os: linux
+dist: bionic
+go: 1.14.x
+
 addons:
   apt:
     packages:
-    - docker-ce
+      - docker-ce
 branches:
   only:
-  - master
-install:
-- git remote -v
+    - master
+env:
+  global:
+    - CGO_ENABLED: 0
+
+gobuild_args: -tags=containers_image_openpgp
+
+before_script:
+  - bash build/build.sh build
+  - bash .travis/travis-before.sh
+  - ls -alh ${HOME}/sync/
+  - ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
 script:
-- bash ./sync.sh 6
-before_install:
-- mkdir -p ~/.ssh
-- mkdir -p ~/.docker
-- openssl aes-256-cbc -K $encrypted_adb29550dbbe_key -iv $encrypted_adb29550dbbe_iv
-  -in .travis/conf.tar.gz.enc -out ~/conf.tar.gz -d
-- tar zxf ~/conf.tar.gz -C ~
-- chmod 600 ~/.ssh/id_rsa
-- chmod 600 ~/.docker/config.json
-- eval $(ssh-agent)
-- ssh-add ~/.ssh/id_rsa
-- df -h
-- ls -al ~
+  - >-
+    ${HOME}/sync/imgsync sync
+    --db ${HOME}/sync/bolt.db
+    --push-to registry.aliyuncs.com
+    --password ${PASS}
+    --push-ns=k8sxio
+    --user zhangguanzhang@qq.com
+    --command-timeout ${TMOUT}
+    --process-limit ${PROCESS:=2}
+    --img-timeout ${IMG_TMOUT:=10m}
+    --live-interval ${LIVE:=9m20s}
+    --debug=${DEBUG:=false}
+    google_containers
+
+after_success:
+  - bash .travis/travis-after.sh
+  - ls -alh ${HOME}/sync/
+  - ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
+after_failure:
+  - bash .travis/travis-after.sh
+  - ls -alh ${HOME}/sync/

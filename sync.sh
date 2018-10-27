@@ -61,6 +61,23 @@ hub_tag_exist(){
 
 main(){
 
+google::name(){
+    curl -XPOST -ks 'https://console.cloud.google.com/m/gcr/entities/list' \
+           -H 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.7 Safari/537.36' \
+           -H 'Content-Type: application/json;charset=UTF-8' \
+           -H 'Accept: application/json, text/plain, */*' \
+           --data-binary ['"'"$@"'"']   |
+        awk -F'"' '/"/{if(NR==3){if(!a[$4]++)print $4}else{if(!a[$2]++)print $2}}'
+}
+
+google::tag(){
+    curl -ks -XGET https://gcr.io/v2/${1}/${2}/tags/list | jq .tags[]
+}
+
+google::name gcr.io/google_containers
+
+
+
     Multi_process_init $max_process
 
     image_pull gcr.io/cloud-datalab/datalab-gpu

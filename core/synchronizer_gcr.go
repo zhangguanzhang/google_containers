@@ -119,8 +119,8 @@ func (gcr *Gcr) Sync(namespace string) {
 	gcrImages := gcr.setDefault().Images(gcr.Option.Ctx, namespace)
 	logrus.Infof("sync images count: %d in gcr.io/%s", len(gcrImages), namespace)
 	//logrus.Fatal(gcrImages)
-	_ = SyncImages(gcr.Option.Ctx, gcrImages, gcr.Option)
-
+	imgs := SyncImages(gcr.Option.Ctx, gcrImages, gcr.Option)
+	report(imgs, namespace)
 }
 
 func (gcr *Gcr) setDefault() *Gcr {
@@ -130,4 +130,29 @@ func (gcr *Gcr) setDefault() *Gcr {
 	}
 	//gcr.namespace = opt.NameSpace
 	return gcr
+}
+
+
+func report(images Images, ns string) {
+
+	var successCount, failedCount, cacheHitCount int
+	var report string
+
+	for _, img := range images {
+		if img.Success {
+			successCount++
+			if img.CacheHit {
+				cacheHitCount++
+			}
+		} else {
+			failedCount++
+		}
+	}
+	report = fmt.Sprintf(`========================================
+>> Sync Repo: gcr.io/%s
+>> Sync Total: %d
+>> Sync Failed: %d
+>> Sync Success: %d
+>> CacheHit: %d`, ns, len(images), failedCount, successCount, cacheHitCount)
+	fmt.Println(report)
 }

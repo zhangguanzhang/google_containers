@@ -34,6 +34,7 @@ script:
     --process-limit ${PROCESS:=2}
     --img-timeout ${IMG_TMOUT:=10m}
     --live-interval ${LIVE:=9m20s}
+    --login-retry ${LOGIN_RETRY:=2}
     --debug=${DEBUG:=false}
     google_containers
 

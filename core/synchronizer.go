@@ -39,6 +39,7 @@ type SyncOption struct {
 	CmdTimeout    time.Duration // command timeout
 	SingleTimeout time.Duration // Sync single image timeout
 	LiveInterval  time.Duration
+	LoginRetry uint8
 	Limit         int // Images sync process limit
 	ConfPath      string
 	PushRepo      string
@@ -47,7 +48,6 @@ type SyncOption struct {
 	Retry         int
 	RetryInterval time.Duration
 	Report        bool // Report sync result
-	ReportLevel   int  // Report level
 	Ctx           context.Context
 	CheckSumer
 	Closer func() error
@@ -100,10 +100,20 @@ func (s *SyncOption) Verify() error {
 		return err
 	}
 
-	status, _, err := RegistryService.Auth(s.Ctx, authConf, "")
+	var status string
+
+	for count := s.LoginRetry; count > 0; count-- {
+		if status, _, err = RegistryService.Auth(s.Ctx, authConf, ""); err != nil && strings.Contains(err.Error(), "timeout"){
+			<-time.After(time.Second * 1)
+		} else {
+			break
+		}
+	}
+
 	if err != nil {
 		return err
 	}
+
 	if !strings.Contains(status, "Succeeded") {
 		return fmt.Errorf("cannot get status")
 	}

@@ -19,7 +19,7 @@
 
 - 核心拷贝方法引用的`containers/images`，部分代码借鉴了[mritd](https://github.com/mritd/imgsync)
 
-- 利用boltdb存储每个镜像的crc32校验值，通过比对判断是否需要同步
+- 利用boltdb存储每个镜像manifest信息的crc32校验值，通过比对判断是否需要同步，而不是每次请求目标仓库
 - 把boltdb文件放docker镜像里存在dockerhub上，利用travis的api来重启travis-ci的runner来同步
 
 
@@ -45,6 +45,7 @@ imgsync sync --help
       -h, --help                       help for sync
           --img-timeout duration       sync single image timeout. (default 15m0s)
           --live-interval duration     live output for travis-ci.
+          --login-retry uint8          login retry when timeout. (default 2)
       -p, --password string            The password to push.
           --process-limit int          sync process limit. (default 2)
           --push-ns string             the ns push to
@@ -73,6 +74,7 @@ imgsync sync --help
   --process-limit ${PROCESS:=2}
   --img-timeout ${IMG_TMOUT:=10m} 
   --live-interval ${LIVE:=9m20s}
+  --login-retry ${LOGIN_RETRY:=2}
   --debug=${DEBUG:=false} 
   google_containers
 ```

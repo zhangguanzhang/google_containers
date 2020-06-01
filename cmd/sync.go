@@ -62,6 +62,10 @@ func AddSyncLimitFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 		&op.Limit, "process-limit", 2,
 		"sync process limit.",
 	)
+	flagSet.Uint8Var(
+		&op.LoginRetry, "login-retry", 2,
+		"login retry when timeout.",
+	)
 	flagSet.DurationVar(
 		&op.CmdTimeout, "command-timeout", 0,
 		"timeout for the command execution.",

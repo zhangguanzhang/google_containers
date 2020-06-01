@@ -132,7 +132,6 @@ func (gcr *Gcr) setDefault() *Gcr {
 	return gcr
 }
 
-
 func report(images Images, ns string) {
 
 	var successCount, failedCount, cacheHitCount int

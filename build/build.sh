@@ -9,7 +9,7 @@ source "${PRO_ROOT}/build/lib/var.sh"
 
 read TAG_NUM LDFLAGS < <(GONELIST::SetVersion)
 
-echo go build -o ${GONELIST_ROOT}/imgsync -ldflags "${LDFLAGS}" ${PRO_ROOT}/main.go
+echo go build -o ${PRO_ROOT}/imgsync -ldflags "${LDFLAGS}" ${PRO_ROOT}/main.go
 
 
 case "$1" in

@@ -39,7 +39,7 @@ type SyncOption struct {
 	CmdTimeout    time.Duration // command timeout
 	SingleTimeout time.Duration // Sync single image timeout
 	LiveInterval  time.Duration
-	LoginRetry uint8
+	LoginRetry    uint8
 	Limit         int // Images sync process limit
 	ConfPath      string
 	PushRepo      string
@@ -103,7 +103,7 @@ func (s *SyncOption) Verify() error {
 	var status string
 
 	for count := s.LoginRetry; count > 0; count-- {
-		if status, _, err = RegistryService.Auth(s.Ctx, authConf, ""); err != nil && strings.Contains(err.Error(), "timeout"){
+		if status, _, err = RegistryService.Auth(s.Ctx, authConf, ""); err != nil && strings.Contains(err.Error(), "timeout") {
 			<-time.After(time.Second * 1)
 		} else {
 			break

@@ -47,8 +47,10 @@ func Execute() error {
 	cobra.OnInitialize(initLog)
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "debug mode")
 	rootCmd.SetVersionTemplate(versionTpl())
-	rootCmd.AddCommand(NewSyncComamnd(nil))
-	rootCmd.AddCommand(NewSumCommand())
+	rootCmd.AddCommand(NewSyncComamnd(nil),
+		NewSumCommand(),
+		NewGetSumCommand(),
+		NewCheckComamnd())
 
 	return rootCmd.Execute()
 }

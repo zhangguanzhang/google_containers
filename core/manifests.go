@@ -13,7 +13,7 @@ import (
 )
 
 // crc32 hash and err
-func getManifestBodyCheckSum(imageName string) (uint32, error) {
+func GetManifestBodyCheckSum(imageName string) (uint32, error) {
 	srcRef, err := docker.ParseReference("//" + imageName)
 	if err != nil {
 		return 0, err

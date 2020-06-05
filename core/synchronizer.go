@@ -301,7 +301,7 @@ func checkSync(image *Image, opt *SyncOption) (uint32, bool) {
 	imgFullName := fmt.Sprintf("gcr.io/%s", image.String())
 	err := retry(opt.Retry, opt.RetryInterval, func() error {
 		var mErr error
-		bodySum, mErr = getManifestBodyCheckSum(imgFullName)
+		bodySum, mErr = GetManifestBodyCheckSum(imgFullName)
 		if mErr != nil {
 			return mErr
 		}

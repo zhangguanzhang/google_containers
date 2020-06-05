@@ -3,8 +3,10 @@ package core
 import (
 	"encoding/binary"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	bolt "go.etcd.io/bbolt"
 	"go/types"
+	"os"
 )
 
 type CheckSumer interface {
@@ -53,7 +55,11 @@ func (b *boltdb) Diff(imageName string, remoteSum uint32) (bool, error) {
 		}
 		//和下面的Save同时使用小端或者大端
 		// 不同则true
-		if remoteSum != binary.LittleEndian.Uint32(DBImgBytes) {
+		lsum := binary.LittleEndian.Uint32(DBImgBytes)
+		if remoteSum != lsum {
+			if os.Getenv("HASH_DIS") != "" {
+				log.Infof("imageName:%s local:%d remote:%d", imageName, remoteSum, lsum)
+			}
 			diff = true
 		}
 		return nil

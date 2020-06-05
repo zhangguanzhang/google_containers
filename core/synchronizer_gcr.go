@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,8 +21,13 @@ type Gcr struct {
 
 //返回ns下所有镜像名且带tag
 func (gcr *Gcr) Images(ctx context.Context, namespace string) Images {
+	var publicImageNames []string
 	//先获取ns下所有镜像名
-	publicImageNames := gcr.NSImageNames(namespace)
+	if strings.Contains(namespace, "/") {
+		publicImageNames = []string{namespace}
+	} else {
+		publicImageNames = gcr.NSImageNames(namespace)
+	}
 
 	logrus.Debugf("start to get gcr.io/%s tags...", namespace)
 
@@ -50,6 +56,9 @@ func (gcr *Gcr) Images(ctx context.Context, namespace string) Images {
 		imageBaseName := tmpImageName
 		var iName string
 		iName = fmt.Sprintf("%s/%s/%s", defaultGcrRepo, namespace, imageBaseName)
+		//	func() {
+		//	gcr.ImageNames(namespace, imageBaseName, imgCh, ctx, imgGetWg)
+		//}
 		err = pool.Submit(func() {
 			defer imgGetWg.Done()
 			select {
@@ -61,7 +70,7 @@ func (gcr *Gcr) Images(ctx context.Context, namespace string) Images {
 					ctx:     gcr.Option.Ctx,
 					Timeout: time.Second * 10,
 				})
-				if err != nil {
+				if terr != nil {
 					logrus.Errorf("failed to get image [%s] tags, error: %s", iName, terr)
 					return
 				}
@@ -112,6 +121,35 @@ func (gcr *Gcr) NSImageNames(ns string) []string {
 		logrus.Fatalf("failed to get gcr/%s images, address: %s, error: %s", ns, addr, err)
 	}
 	return imageNames
+}
+
+func (gcr *Gcr) ImageNames(ns, baseName string, imgCh chan<- Image, ctx context.Context, imgGetWg *sync.WaitGroup) {
+	iName := fmt.Sprintf("%s/%s/%s", defaultGcrRepo, ns, baseName)
+	defer imgGetWg.Done()
+	select {
+	case <-ctx.Done():
+		logrus.Debugf("context done exit while %s", iName)
+	default:
+		logrus.Debugf("query image [%s] tags...", iName)
+		tags, err := getImageTags(iName, TagsOption{
+			ctx:     gcr.Option.Ctx,
+			Timeout: time.Second * 5,
+		})
+		if err != nil {
+			logrus.Errorf("failed to get image [%s] tags, error: %s", iName, err)
+			return
+		}
+		logrus.Debugf("image [%s] tags count: %d", iName, len(tags))
+		//构建带tag的镜像名
+
+		for _, tag := range tags {
+			imgCh <- Image{
+				NameSpaces: ns,
+				Name:       baseName,
+				Tag:        tag,
+			}
+		}
+	}
 }
 
 func (gcr *Gcr) Sync(namespace string) {

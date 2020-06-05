@@ -21,7 +21,10 @@ func NewSumCommand() *cobra.Command {
 }
 
 func listCheckSum(cmd *cobra.Command, args []string) {
-	db, err := bolt.Open(args[0], 0600, &bolt.Options{Timeout: 1 * time.Second})
+	db, err := bolt.Open(args[0], 0600, &bolt.Options{
+		Timeout: 1 * time.Second,
+		ReadOnly: true,
+	})
 	if err != nil {
 		log.Fatalf("open the boltdb file %s error: %v", args[0], err)
 	}

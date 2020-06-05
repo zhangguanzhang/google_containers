@@ -21,11 +21,17 @@ type Gcr struct {
 
 //返回ns下所有镜像名且带tag
 func (gcr *Gcr) Images(ctx context.Context, namespace string) Images {
-	var publicImageNames []string
+	var (
+		publicImageNames []string
+		ns string
+	)
 	//先获取ns下所有镜像名
 	if strings.Contains(namespace, "/") {
-		publicImageNames = []string{namespace}
+		nameSlice := strings.Split(namespace, "/")
+		publicImageNames = []string{nameSlice[1]}
+		ns = nameSlice[0]
 	} else {
+		ns = namespace
 		publicImageNames = gcr.NSImageNames(namespace)
 	}
 
@@ -55,7 +61,7 @@ func (gcr *Gcr) Images(ctx context.Context, namespace string) Images {
 	for _, tmpImageName := range publicImageNames {
 		imageBaseName := tmpImageName
 		var iName string
-		iName = fmt.Sprintf("%s/%s/%s", defaultGcrRepo, namespace, imageBaseName)
+		iName = fmt.Sprintf("%s/%s/%s", defaultGcrRepo, ns, imageBaseName)
 		//	func() {
 		//	gcr.ImageNames(namespace, imageBaseName, imgCh, ctx, imgGetWg)
 		//}
@@ -78,7 +84,7 @@ func (gcr *Gcr) Images(ctx context.Context, namespace string) Images {
 				//构建带tag的镜像名
 				for _, tag := range tags {
 					imgCh <- Image{
-						NameSpaces: namespace,
+						NameSpaces: ns,
 						Name:       imageBaseName,
 						Tag:        tag,
 					}

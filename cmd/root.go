@@ -50,7 +50,8 @@ func Execute() error {
 	rootCmd.AddCommand(NewSyncComamnd(nil),
 		NewSumCommand(),
 		NewGetSumCommand(),
-		NewCheckComamnd())
+		NewCheckComamnd(),
+		NewReplaceComamnd())
 
 	return rootCmd.Execute()
 }

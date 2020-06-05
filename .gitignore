@@ -12,6 +12,7 @@
 *.out
 
 dist
+main
 imgsync
 *.db
 .idea/*

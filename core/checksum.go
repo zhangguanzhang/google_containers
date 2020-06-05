@@ -50,6 +50,8 @@ func (b *boltdb) Diff(imageName string, remoteSum uint32) (bool, error) {
 	err = b.db.Batch(func(tx *bolt.Tx) error {
 		DBImgBytes := b.Bucket(tx).Get([]byte(imageName))
 		if len(DBImgBytes) != int(types.Uint32) { //没读到数据或者长度不对,不能使用binary的方法转uint32，否则会out of range
+			log.Debugf("imageName:%s, len:%d", imageName, len(DBImgBytes))
+			//TODO 此处有boltdb的bug，部分key会在这里读取一直是0字节，只有不在这里，外面使用replace命令删除该key，重新写入才行
 			diff = true
 			return nil
 		}

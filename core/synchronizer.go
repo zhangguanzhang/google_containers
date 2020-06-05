@@ -69,7 +69,7 @@ func (s *SyncOption) PreRun(cmd *cobra.Command, args []string) {
 
 	log.Infof("Login Succeeded for %s", s.PushRepo)
 
-	db, err := bolt.Open(s.DbFile, 0600, &bolt.Options{Timeout: 3 * time.Second})
+	db, err := bolt.Open(s.DbFile, 0660, &bolt.Options{Timeout: 10 * time.Second})
 	if err != nil {
 		log.Fatalf("open the boltdb file %s error: %v", s.DbFile, err)
 	}
@@ -324,6 +324,8 @@ func checkSync(image *Image, opt *SyncOption) (uint32, bool) {
 		log.Errorf("failed to get image [%s] checkSum, error: %s", imgFullName, err)
 		return 0, false
 	}
+
+	log.Debugf("%s diff:%v", imgFullName, diff)
 
 	if !diff { //相同
 		image.Success = true

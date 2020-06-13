@@ -22,7 +22,7 @@ func NewSumCommand() *cobra.Command {
 
 func listCheckSum(cmd *cobra.Command, args []string) {
 	db, err := bolt.Open(args[0], 0600, &bolt.Options{
-		Timeout: 1 * time.Second,
+		Timeout:  1 * time.Second,
 		ReadOnly: true,
 	})
 	if err != nil {

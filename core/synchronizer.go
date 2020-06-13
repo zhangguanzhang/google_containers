@@ -318,7 +318,7 @@ func checkSync(image *Image, opt *SyncOption) (uint32, bool) {
 	}
 
 	// db查询校验值是否相等
-	diff, err = opt.CheckSumer.Diff(imgFullName, bodySum)
+	diff, err = opt.CheckSumer.Diff(image.String(), bodySum)
 	if err != nil {
 		image.Err = err
 		log.Errorf("failed to get image [%s] checkSum, error: %s", imgFullName, err)

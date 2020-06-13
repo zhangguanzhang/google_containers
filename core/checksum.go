@@ -40,34 +40,36 @@ func (b *boltdb) CreatBucket(domain string) error {
 	})
 }
 
-// imageName是镜像名带tag remoteSum
+// imageName是镜像名去掉域名部分带tag remoteSum
 func (b *boltdb) Diff(imageName string, remoteSum uint32) (bool, error) {
 	var (
-		diff bool
-		err  error
+		err      error
+		SumBytes []byte
 	)
 
-	err = b.db.Batch(func(tx *bolt.Tx) error {
-		DBImgBytes := b.Bucket(tx).Get([]byte(imageName))
-		if len(DBImgBytes) != int(types.Uint32) { //没读到数据或者长度不对,不能使用binary的方法转uint32，否则会out of range
-			log.Debugf("imageName:%s, len:%d", imageName, len(DBImgBytes))
-			//TODO 此处有boltdb的bug，部分key会在这里读取一直是0字节，只有不在这里，外面使用replace命令删除该key，重新写入才行
-			diff = true
-			return nil
-		}
-		//和下面的Save同时使用小端或者大端
-		// 不同则true
-		lsum := binary.LittleEndian.Uint32(DBImgBytes)
-		if remoteSum != lsum {
-			if os.Getenv("HASH_DIS") != "" {
-				log.Infof("imageName:%s local:%d remote:%d", imageName, remoteSum, lsum)
-			}
-			diff = true
-		}
+	err = b.db.View(func(tx *bolt.Tx) error {
+		SumBytes = b.Bucket(tx).Get([]byte(imageName))
 		return nil
 	})
 
-	return diff, err
+	if err != nil {
+		return false, err
+	}
+
+	if len(SumBytes) != int(types.Uint32) { //没读到数据或者长度不对,不能使用binary的方法转uint32，否则会out of range
+		log.Debugf("imageName:%s, len:%d", imageName, len(SumBytes))
+		return true, nil
+	}
+
+	lsum := binary.LittleEndian.Uint32(SumBytes) //和下面的Save同时使用小端或者大端
+	if remoteSum != lsum {
+		if os.Getenv("HASH_DIS") != "" {
+			log.Infof("imageName:%s local:%d remote:%d", imageName, remoteSum, lsum)
+		}
+		return true, nil
+	}
+
+	return false, err
 }
 
 func (b *boltdb) Save(imageName string, checkSum uint32) error {

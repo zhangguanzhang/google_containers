@@ -23,11 +23,11 @@ type Gcr struct {
 func (gcr *Gcr) Images(ctx context.Context, namespace string) Images {
 	var (
 		publicImageNames []string
-		ns string
+		ns               string
 	)
 	//先获取ns下所有镜像名
 	if strings.Contains(namespace, "/") {
-		nameSlice := strings.Split(namespace, "/")
+		nameSlice := strings.Split(namespace, "/") //ns下单独image
 		publicImageNames = []string{nameSlice[1]}
 		ns = nameSlice[0]
 	} else {

@@ -20,7 +20,7 @@ func NewCheckComamnd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			db, err := bolt.Open(dbFile, 0600, &bolt.Options{
-				Timeout: 3 * time.Second,
+				Timeout:  3 * time.Second,
 				ReadOnly: true})
 			if err != nil {
 				log.Fatalf("open the boltdb file %s error: %v", dbFile, err)
@@ -79,9 +79,9 @@ func NewReplaceComamnd() *cobra.Command {
 					log.Errorf("%s|%v", image, err)
 				}
 
-				key := []byte(image)
+				key := []byte(strings.TrimPrefix(image, "gcr.io"))
 				if err := db.Update(func(tx *bolt.Tx) error {
-					if err := tx.Bucket([]byte("gcr.io")).Delete(key);err != nil {
+					if err := tx.Bucket([]byte("gcr.io")).Delete(key); err != nil {
 						return err
 					}
 					dstBytesBuf := make([]byte, types.Uint32)

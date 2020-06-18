@@ -103,7 +103,8 @@ func (s *SyncOption) Verify() error {
 	var status string
 
 	for count := s.LoginRetry; count > 0; count-- {
-		if status, _, err = RegistryService.Auth(s.Ctx, authConf, ""); err != nil && strings.Contains(err.Error(), "timeout") {
+		status, _, err = RegistryService.Auth(s.Ctx, authConf, "")
+		if err != nil && (strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "context")){
 			<-time.After(time.Second * 1)
 		} else {
 			break

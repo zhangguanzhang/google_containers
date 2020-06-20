@@ -100,11 +100,14 @@ func (s *SyncOption) Verify() error {
 		return err
 	}
 
-	var status string
+	var (
+		status      string
+		errContains = []string{"imeout", "dead"}
+	)
 
 	for count := s.LoginRetry; count > 0; count-- {
 		status, _, err = RegistryService.Auth(s.Ctx, authConf, "")
-		if err != nil && (strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "context")){
+		if err != nil && contains(errContains, err.Error()) {
 			<-time.After(time.Second * 1)
 		} else {
 			break
@@ -119,6 +122,15 @@ func (s *SyncOption) Verify() error {
 		return fmt.Errorf("cannot get status")
 	}
 	return nil
+}
+
+func contains(s []string, searchterm string) bool {
+	for _, v := range s {
+		if strings.Contains(searchterm, v) {
+			return true
+		}
+	}
+	return false
 }
 
 func Run(opt *SyncOption, namespace []string) {

@@ -10,6 +10,10 @@
 目前已经同步完了，可以看[travis-ci的运行状态](https://travis-ci.org/github/zhangguanzhang/google_containers)
 
 
+查看镜像列表的话去[阿里云镜像仓库市场](https://cr.console.aliyun.com/cn-hangzhou/instances/images) 
+
+登录后在搜索框那输入`k8sxio/`搜索即可，也可以看单独的镜像例如`k8sxio/kube-apiserver`
+
 ## 特性
 
 - **不依赖 Docker 运行**
@@ -17,7 +21,7 @@
 - **可控的并发同步(优雅关闭/可调节并发数量)**
 
 
-- 核心拷贝方法引用的`containers/images`，部分代码借鉴了[mritd](https://github.com/mritd/imgsync)
+- 核心拷贝方法引用的[containers/image](https://github.com/containers/image)，部分代码借鉴了[mritd](https://github.com/mritd/imgsync)
 
 - 利用boltdb存储每个镜像manifest信息的crc32校验值，通过比对判断是否需要同步，而不是每次请求目标仓库
 - 把boltdb文件放docker镜像里存在dockerhub上，利用travis的api来重启travis-ci的runner来同步

@@ -3,6 +3,7 @@ language: go
 os: linux
 dist: bionic
 go: 1.14.x
+sudo: required
 
 addons:
   apt:
@@ -24,6 +25,7 @@ before_script:
   - ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
 script:
   - >-
+    sudo
     ${HOME}/sync/imgsync sync
     --db ${HOME}/sync/bolt.db
     --push-to registry.aliyuncs.com
@@ -36,7 +38,6 @@ script:
     --live-interval ${LIVE:=9m20s}
     --login-retry ${LOGIN_RETRY:=2}
     --debug=${DEBUG:=false}
-    google_containers
 
 after_success:
   - bash .travis/travis-after.sh

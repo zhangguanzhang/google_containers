@@ -1,12 +1,7 @@
 package main
 
-import (
-	log "github.com/sirupsen/logrus"
-	"imgsync/cmd"
-)
+import "github.com/zhangguanzhang/google_containers/cmd"
 
 func main() {
-	if err := cmd.Execute(); err != nil {
-		log.Fatal(err)
-	}
+	cmd.Execute()
 }

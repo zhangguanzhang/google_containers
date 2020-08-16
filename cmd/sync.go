@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
-	"imgsync/core"
-	"time"
+	"github.com/zhangguanzhang/google_containers/core"
 )
+
 
 func NewSyncComamnd(Options *core.SyncOption) *cobra.Command {
 	if Options == nil {
@@ -17,10 +19,10 @@ func NewSyncComamnd(Options *core.SyncOption) *cobra.Command {
 		Short: "Sync docker images",
 		Long: `
 Sync docker images.`,
-		Args:   cobra.ExactArgs(1),
-		PreRun: Options.PreRun,
+		//Args:   cobra.ExactArgs(1),
+		PreRunE: Options.PreRun,
 		Run: func(cmd *cobra.Command, args []string) {
-			core.Run(Options, args)
+			core.Run(Options)
 		},
 	}
 
@@ -29,6 +31,8 @@ Sync docker images.`,
 
 	return cmd
 }
+
+
 
 func AddSyncAuthFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 	flagSet.StringVarP(
@@ -87,3 +91,4 @@ func AddSyncLimitFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 		"retry interval while err.",
 	)
 }
+

@@ -4,7 +4,7 @@
 
 由于这个ns的所有者同步太慢了，我便写了这个工具来时刻同步
 
-本仓库只同步`gcr.io/google_containers` ==> `registry.aliyuncs.com/k8sxio`
+本仓库只同步`k8s.gcr.io` ==> `registry.aliyuncs.com/k8sxio`，目前`gcr.io/google_containers`已经不和`k8s.gcr.io`一致了，所以目前只同步`k8s.gcr.io`
 
 
 目前已经同步完了，可以看[travis-ci的运行状态](https://travis-ci.org/github/zhangguanzhang/google_containers)
@@ -23,8 +23,8 @@
 
 - 核心拷贝方法引用的[containers/image](https://github.com/containers/image)，部分代码借鉴了[mritd](https://github.com/mritd/imgsync)
 
-- 利用boltdb存储每个镜像manifest信息的crc32校验值，通过比对判断是否需要同步，而不是每次请求目标仓库
-- 把boltdb文件放docker镜像里存在dockerhub上，利用travis的api来重启travis-ci的runner来同步
+- 利用 boltdb 存储每个镜像 manifest 信息的 crc32 校验值，通过比对判断是否需要同步，而不是每次请求目标仓库
+- 把 boltdb 文件放 docker镜像里存在 dockerhub 上，利用 travis 的api来重启 travis-ci 的 runner 来同步
 
 
 ## 用法
@@ -80,5 +80,4 @@ imgsync sync --help
   --live-interval ${LIVE:=9m20s}
   --login-retry ${LOGIN_RETRY:=2}
   --debug=${DEBUG:=false} 
-  google_containers
 ```

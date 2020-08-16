@@ -1,28 +1,22 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"os"
-	"os/signal"
 	"runtime"
-	"sync"
-	"syscall"
-	"time"
-
-	"imgsync/core"
 
 	log "github.com/sirupsen/logrus"
-
 	"github.com/spf13/cobra"
 )
+
+
+
 
 func NewImgSyncCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "imgsync",
 		Short: "Docker image sync tool",
 		Long: `
-Docker image sync tool.`,
+Docker image sync tool for k8s.gcr.io.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			_ = cmd.Help()
 		},
@@ -31,7 +25,8 @@ Docker image sync tool.`,
 	return rootCmd
 }
 
-func Execute() error {
+
+func Execute() {
 	var debug bool
 	rootCmd := NewImgSyncCommand()
 	initLog := func() {
@@ -51,10 +46,18 @@ func Execute() error {
 		NewSumCommand(),
 		NewGetSumCommand(),
 		NewCheckComamnd(),
-		NewReplaceComamnd())
+		NewReplaceComamnd(),
+	)
 
-	return rootCmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }
+
+
+
+
+
 
 var (
 	Version      string
@@ -73,51 +76,4 @@ GoVersion: %s
 Compiler: %s
 Platform: %s/%s
 `, Version, gitCommit, gitTreeState, buildDate, runtime.Version(), runtime.Compiler, runtime.GOOS, runtime.GOARCH)
-}
-
-func boot(opt *core.SyncOption, namespace string) {
-	Sigs := make(chan os.Signal)
-
-	var cancel context.CancelFunc
-	opt.Ctx, cancel = context.WithCancel(context.Background())
-	if opt.CmdTimeout > 0 {
-		opt.Ctx, cancel = context.WithTimeout(opt.Ctx, opt.CmdTimeout)
-	}
-
-	var cancelOnce sync.Once
-	defer cancel()
-	go func() {
-		for range Sigs {
-			cancelOnce.Do(func() {
-				log.Info("Receiving a termination signal, gracefully shutdown!")
-				cancel()
-			})
-			log.Info("The goroutines pool has stopped, please wait for the remaining tasks to complete.")
-		}
-	}()
-	signal.Notify(Sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	if err := opt.CheckSumer.CreatBucket("gcr.io"); err != nil {
-		log.Error(err)
-	}
-
-	g := &core.Gcr{Option: opt}
-
-	if opt.LiveInterval > 0 {
-		if opt.LiveInterval >= 10*time.Minute { //travis-ci 10分钟没任何输出就会被强制关闭
-			opt.LiveInterval = 9 * time.Minute
-		}
-		go func() {
-			for {
-				select {
-				case <-opt.Ctx.Done():
-					return
-				case <-time.After(opt.LiveInterval):
-					log.Info("Live output for in travis-ci")
-				}
-			}
-		}()
-	}
-
-	g.Sync(namespace)
 }

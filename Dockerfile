@@ -17,5 +17,5 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o imgsync -tags=containers_i
 
 FROM alpine:3.11.6
 WORKDIR /root
-COPY --from=builder /root/myapp/imgsynct /imgsync
+COPY --from=builder /root/myapp/imgsync /imgsync
 ENTRYPOINT ["/imgsync"]

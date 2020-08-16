@@ -2,140 +2,30 @@ package core
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	types2 "github.com/docker/docker/api/types"
-	"github.com/docker/docker/registry"
-	"github.com/spf13/cobra"
-	bolt "go.etcd.io/bbolt"
+	"github.com/pkg/errors"
 	"os"
 	"os/signal"
 	"sort"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/containers/image/v5/copy"
-	"github.com/containers/image/v5/docker"
-	"github.com/containers/image/v5/signature"
-	"github.com/containers/image/v5/types"
+	"github.com/containers/image/copy"
+	"github.com/containers/image/docker"
+	"github.com/containers/image/signature"
+	"github.com/containers/image/types"
 	"github.com/panjf2000/ants/v2"
-
 	log "github.com/sirupsen/logrus"
 )
 
-type auth struct {
-	User string `json:"user" yaml:"user"`
-	Pass string `json:"pass" yaml:"pass"`
-}
+func Run(opt *SyncOption) {
 
-type DomainIns struct {
-	Auth auth `json:"auth,omitempty"`
-}
+	opt = opt.setDefault()
 
-type SyncOption struct {
-	Auth          auth          `json:"auth" yaml:"auth,omitempty"`
-	CmdTimeout    time.Duration // command timeout
-	SingleTimeout time.Duration // Sync single image timeout
-	LiveInterval  time.Duration
-	LoginRetry    uint8
-	Limit         int // Images sync process limit
-	ConfPath      string
-	PushRepo      string
-	PushNS        string
-	QueryLimit    int // Query Gcr images limit
-	Retry         int
-	RetryInterval time.Duration
-	Report        bool // Report sync result
-	Ctx           context.Context
-	CheckSumer
-	Closer func() error
-	DbFile string
-}
-
-func (s *SyncOption) PreRun(cmd *cobra.Command, args []string) {
-
-	if s.Auth.User == "" && s.Auth.Pass == "" {
-		log.Fatal("username or pass must not be empty")
-	}
-	if s.PushNS == "" {
-		s.PushNS = s.Auth.User
-	}
-
-	if err := s.Verify(); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Infof("Login Succeeded for %s", s.PushRepo)
-
-	db, err := bolt.Open(s.DbFile, 0660, &bolt.Options{Timeout: 10 * time.Second})
-	if err != nil {
-		log.Fatalf("open the boltdb file %s error: %v", s.DbFile, err)
-	}
-	s.Closer = db.Close
-	s.CheckSumer = NewBolt(db)
-}
-
-func (s *SyncOption) Verify() error {
-	authConf := &types2.AuthConfig{
-		Username: s.Auth.User,
-		Password: s.Auth.Pass,
-	}
-
-	// https://github.com/moby/moby/blob/c3b3aedfa4ad51de0a2ebfd08a716f585390b512/daemon/daemon.go#L714
-	// https://github.com/moby/moby/blob/master/daemon/auth.go
-
-	if s.PushRepo == registry.IndexName {
-		authConf.ServerAddress = registry.IndexServer
-	} else {
-		authConf.ServerAddress = s.PushRepo
-	}
-	if !strings.HasPrefix(authConf.ServerAddress, "https://") && !strings.HasPrefix(authConf.ServerAddress, "http://") {
-		authConf.ServerAddress = "https://" + authConf.ServerAddress
-	}
-
-	RegistryService, err := registry.NewService(registry.ServiceOptions{})
-	if err != nil {
-		return err
-	}
-
-	var (
-		status      string
-		errContains = []string{"imeout", "dead"}
-	)
-
-	for count := s.LoginRetry; count > 0; count-- {
-		status, _, err = RegistryService.Auth(s.Ctx, authConf, "")
-		if err != nil && contains(errContains, err.Error()) {
-			<-time.After(time.Second * 1)
-		} else {
-			break
-		}
-	}
-
-	if err != nil {
-		return err
-	}
-
-	if !strings.Contains(status, "Succeeded") {
-		return fmt.Errorf("cannot get status")
-	}
-	return nil
-}
-
-func contains(s []string, searchterm string) bool {
-	for _, v := range s {
-		if strings.Contains(searchterm, v) {
-			return true
-		}
-	}
-	return false
-}
-
-func Run(opt *SyncOption, namespace []string) {
-
-	defer opt.Closer()
+	defer func() {
+		_ = opt.Closer()
+	}()
 	Sigs := make(chan os.Signal)
 
 	var cancel context.CancelFunc
@@ -157,11 +47,10 @@ func Run(opt *SyncOption, namespace []string) {
 	}()
 	signal.Notify(Sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	if err := opt.CheckSumer.CreatBucket("gcr.io"); err != nil {
+	if err := opt.CheckSumer.CreatBucket("k8s.gcr.io"); err != nil {
 		log.Error(err)
 	}
 
-	g := &Gcr{Option: opt}
 
 	if opt.LiveInterval > 0 {
 		if opt.LiveInterval >= 10*time.Minute { //travis-ci 10分钟没任何输出就会被强制关闭
@@ -178,21 +67,30 @@ func Run(opt *SyncOption, namespace []string) {
 			}
 		}()
 	}
+	//
+	//for _, ns := range namespace {
+	//	g.Sync(ns)
+	//}
+	if err := Sync(opt); err != nil {
+		log.Fatal(err)
+	}
+}
 
-	for _, ns := range namespace {
-		g.Sync(ns)
+
+func Sync(opt *SyncOption) error {
+	allImages, err := ImageNames(opt)
+	if err != nil {
+		return err
 	}
 
+	imgs := SyncImages(allImages, opt)
+	log.Info("sync done")
+	report(imgs)
+	return nil
 }
 
-type TagsOption struct {
-	ctx     context.Context
-	Timeout time.Duration
-}
 
-func SyncImages(ctx context.Context, imgs Images, opt *SyncOption) Images {
-	//imgs := batchProcess(images, opt)
-	//logrus.Infof("starting sync images, image total: %d", len(imgs))
+func SyncImages(imgs Images, opt *SyncOption) Images {
 
 	processWg := new(sync.WaitGroup)
 	processWg.Add(len(imgs))
@@ -204,6 +102,7 @@ func SyncImages(ctx context.Context, imgs Images, opt *SyncOption) Images {
 	pool, err := ants.NewPool(opt.Limit, ants.WithPreAlloc(true), ants.WithPanicHandler(func(i interface{}) {
 		log.Error(i)
 	}))
+
 	if err != nil {
 		log.Fatalf("failed to create goroutines pool: %s", err)
 	}
@@ -214,9 +113,9 @@ func SyncImages(ctx context.Context, imgs Images, opt *SyncOption) Images {
 			defer processWg.Done()
 
 			select {
-			case <-ctx.Done():
+			case <-opt.Ctx.Done():
 			default:
-				log.Debugf("process image: gcr.io/%s", imgs[k].String())
+				log.Debug("process image: ", imgs[k].String())
 				newSum, needSync := checkSync(imgs[k], opt)
 				if !needSync {
 					return
@@ -227,13 +126,13 @@ func SyncImages(ctx context.Context, imgs Images, opt *SyncOption) Images {
 				})
 				if rerr != nil {
 					imgs[k].Err = rerr
-					log.Errorf("failed to process image gcr.io/%s, error: %s", imgs[k].String(), rerr)
+					log.Errorf("failed to process image %s, error: %s", imgs[k].String(), rerr)
 					return
 				}
 				imgs[k].Success = true
 
 				//写入校验值
-				if sErr := opt.CheckSumer.Save(imgs[k].String(), newSum); sErr != nil {
+				if sErr := opt.CheckSumer.Save(imgs[k].Key(), newSum); sErr != nil {
 					log.Errorf("failed to save image [%s] checksum: %s", imgs[k].String(), sErr)
 				}
 				log.Debugf("save image [%s] checksum: %d", imgs[k].String(), newSum)
@@ -250,7 +149,7 @@ func SyncImages(ctx context.Context, imgs Images, opt *SyncOption) Images {
 
 func sync2DockerHub(image *Image, opt *SyncOption) error {
 
-	srcImg := fmt.Sprintf("gcr.io/%s", image.String())
+	srcImg := image.String()
 	destImg := fmt.Sprintf("%s/%s/%s:%s", opt.PushRepo, opt.PushNS, image.Name, image.Tag)
 
 	log.Infof("syncing %s => %s", srcImg, destImg)
@@ -288,21 +187,10 @@ func sync2DockerHub(image *Image, opt *SyncOption) error {
 	_, err = copy.Image(ctx, policyContext, destRef, srcRef, &copy.Options{
 		SourceCtx:          sourceCtx,
 		DestinationCtx:     destinationCtx,
-		ImageListSelection: copy.CopyAllImages,
+		//ImageListSelection: copy.CopyAllImages,
 	})
 	log.Debugf("%s copy done, error is %v.", srcImg, err)
 	return err
-}
-
-func getImageTags(imageName string, opt TagsOption) ([]string, error) {
-	srcRef, err := docker.ParseReference("//" + imageName)
-	if err != nil {
-		return nil, err
-	}
-	sourceCtx := &types.SystemContext{DockerAuthConfig: &types.DockerAuthConfig{}}
-	tagsCtx, tagsCancel := context.WithTimeout(opt.ctx, opt.Timeout)
-	defer tagsCancel()
-	return docker.GetRepositoryTags(tagsCtx, sourceCtx, srcRef)
 }
 
 //已经同步过了没
@@ -311,7 +199,7 @@ func checkSync(image *Image, opt *SyncOption) (uint32, bool) {
 		bodySum uint32
 		diff    bool
 	)
-	imgFullName := fmt.Sprintf("gcr.io/%s", image.String())
+	imgFullName := image.String()
 	err := retry(opt.Retry, opt.RetryInterval, func() error {
 		var mErr error
 		bodySum, mErr = GetManifestBodyCheckSum(imgFullName)
@@ -330,8 +218,8 @@ func checkSync(image *Image, opt *SyncOption) (uint32, bool) {
 		return 0, false
 	}
 
-	// db查询校验值是否相等
-	diff, err = opt.CheckSumer.Diff(image.String(), bodySum)
+	// db查询校验值是否相等，只同步一个ns下镜像，所以bucket的key只用baseName:tag
+	diff, err = opt.CheckSumer.Diff(image.Key(), bodySum)
 	if err != nil {
 		image.Err = err
 		log.Errorf("failed to get image [%s] checkSum, error: %s", imgFullName, err)
@@ -348,4 +236,29 @@ func checkSync(image *Image, opt *SyncOption) (uint32, bool) {
 	}
 
 	return bodySum, true
+}
+
+
+func report(images Images) {
+
+	var successCount, failedCount, cacheHitCount int
+	var report string
+
+	for _, img := range images {
+		if img.Success {
+			successCount++
+			if img.CacheHit {
+				cacheHitCount++
+			}
+		} else {
+			failedCount++
+		}
+	}
+	report = fmt.Sprintf(`========================================
+>> Sync Repo: k8s.gcr.io
+>> Sync Total: %d
+>> Sync Failed: %d
+>> Sync Success: %d
+>> CacheHit: %d`, len(images), failedCount, successCount, cacheHitCount)
+	fmt.Println(report)
 }

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/zhangguanzhang/google_containers/core"
 	bolt "go.etcd.io/bbolt"
 	"go/types"
-	"imgsync/core"
 	"strings"
 	"time"
 )

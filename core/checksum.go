@@ -4,7 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	bolt "go.etcd.io/bbolt"
+	//bolt "go.etcd.io/bbolt"
+	bolt "github.com/etcd-io/bbolt"
 	"go/types"
 	"os"
 )
@@ -56,14 +57,14 @@ func (b *boltdb) Diff(imageName string, remoteSum uint32) (bool, error) {
 		return false, err
 	}
 
-	if len(SumBytes) != int(types.Uint32) { //没读到数据或者长度不对,不能使用binary的方法转uint32，否则会out of range
+	if len(SumBytes) != int(types.Uint32) { //没读到数据或者，长度不对下不能使用binary的方法转uint32，大于4字节会out of range
 		log.Debugf("imageName:%s, len:%d", imageName, len(SumBytes))
 		return true, nil
 	}
 
 	lsum := binary.LittleEndian.Uint32(SumBytes) //和下面的Save同时使用小端或者大端
 	if remoteSum != lsum {
-		if os.Getenv("HASH_DIS") != "" {
+		if os.Getenv("HASH_DIS") != "" { //环境变量来debug输出
 			log.Infof("imageName:%s local:%d remote:%d", imageName, remoteSum, lsum)
 		}
 		return true, nil

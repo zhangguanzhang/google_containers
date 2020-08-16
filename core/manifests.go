@@ -3,13 +3,12 @@ package core
 import (
 	"context"
 	"fmt"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"hash/crc32"
 
-	"github.com/containers/image/v5/docker"
-	"github.com/containers/image/v5/types"
-
-	"github.com/containers/image/v5/manifest"
+	"github.com/containers/image/docker"
+	"github.com/containers/image/manifest"
+	"github.com/containers/image/types"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // crc32 hash and err

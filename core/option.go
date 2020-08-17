@@ -34,6 +34,7 @@ type SyncOption struct {
 	CheckSumer
 	Closer func() error
 	DbFile string
+	AdditionNS []string
 }
 
 func (s *SyncOption) PreRun(cmd *cobra.Command, args []string) error {

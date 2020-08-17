@@ -51,6 +51,10 @@ func AddSyncAuthFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 		&op.PushNS, "push-ns", "",
 		"the ns push to",
 	)
+	flagSet.Uint8Var(
+		&op.LoginRetry, "login-retry", 2,
+		"login retry when timeout.",
+	)
 }
 
 func AddSyncLimitFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
@@ -65,10 +69,6 @@ func AddSyncLimitFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 	flagSet.IntVar(
 		&op.Limit, "process-limit", 2,
 		"sync process limit.",
-	)
-	flagSet.Uint8Var(
-		&op.LoginRetry, "login-retry", 2,
-		"login retry when timeout.",
 	)
 	flagSet.DurationVar(
 		&op.CmdTimeout, "command-timeout", 0,
@@ -90,5 +90,8 @@ func AddSyncLimitFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 		&op.RetryInterval, "retry-interval", 4*time.Second,
 		"retry interval while err.",
 	)
+	flagSet.StringArrayVar(
+		&op.AdditionNS, "addition-ns", nil,
+		"addition ns to sync")
 }
 

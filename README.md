@@ -7,6 +7,8 @@
 本仓库只同步`k8s.gcr.io` ==> `registry.aliyuncs.com/k8sxio`，目前`gcr.io/google_containers`已经不和`k8s.gcr.io`一致了，所以目前只同步`k8s.gcr.io`
 
 
+额外的还有`sig-storage`,`kas-network-proxy`,`build-images`，例如拉取`registry.aliyuncs.com/k8sxio/sig-storage/csi-attacher:v2.2.0`
+
 目前已经同步完了，可以看[travis-ci的运行状态](https://travis-ci.org/github/zhangguanzhang/google_containers)
 
 
@@ -44,6 +46,7 @@ imgsync sync --help
       imgsync sync [flags]
     
     Flags:
+          --addition-ns stringArray    addition ns to sync (default [])
           --command-timeout duration   timeout for the command execution.
           --db string                  the boltdb file (default "bolt.db")
       -h, --help                       help for sync

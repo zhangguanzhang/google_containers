@@ -9,8 +9,6 @@ import (
 )
 
 
-
-
 func NewImgSyncCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "imgsync",

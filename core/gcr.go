@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containers/image/docker"
-	"github.com/containers/image/types"
+	"github.com/containers/image/v5/docker"
+	"github.com/containers/image/v5/types"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/panjf2000/ants/v2"
 	"github.com/parnurzeal/gorequest"
@@ -39,6 +39,35 @@ func NSImages(op *SyncOption) ([]string, error) {
 	err := jsoniter.UnmarshalFromString(jsoniter.Get(body, "child").ToString(), &imageNames)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(op.AdditionNS) > 0 {
+		log.Debugf("AdditionNS: %v", op.AdditionNS)
+	}
+
+	for _, v := range op.AdditionNS {
+		resp, body, errs := gorequest.New().
+			Timeout(DefaultHTTPTimeout).
+			Retry(op.Retry, op.RetryInterval).
+			Get(fmt.Sprintf("https://k8s.gcr.io/v2/%s/tags/list", v)).
+			EndBytes()
+		if errs != nil {
+			log.Errorf("%s", errs)
+			continue
+		}
+
+		defer func() { _ = resp.Body.Close() }()
+
+		nsImageNames := []string{}
+		err := jsoniter.UnmarshalFromString(jsoniter.Get(body, "child").ToString(), &nsImageNames)
+		if err != nil {
+			log.Error(errs)
+			continue
+		}
+		for k := range nsImageNames {
+			nsImageNames[k] = v + "/" + nsImageNames[k]
+		}
+		imageNames = append(imageNames, nsImageNames...)
 	}
 
 	return imageNames, nil

@@ -14,7 +14,7 @@ branches:
     - master
 env:
   global:
-    - CGO_ENABLED: 0
+    - CGO_ENABLED=0
 
 gobuild_args: -tags=containers_image_openpgp
 
@@ -38,6 +38,9 @@ script:
     --live-interval ${LIVE:=9m20s}
     --login-retry ${LOGIN_RETRY:=2}
     --debug=${DEBUG:=false}
+    --addition-ns sig-storage
+    --addition-ns kas-network-proxy
+    --addition-ns build-image
 
 after_success:
   - bash .travis/travis-after.sh

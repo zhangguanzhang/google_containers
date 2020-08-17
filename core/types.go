@@ -19,6 +19,7 @@ func (img *Image) String() string {
 	return fmt.Sprintf("k8s.gcr.io/%s:%s", img.Name, img.Tag)
 }
 
+// used for bolt.db
 func (img *Image) Key() string {
 	return fmt.Sprintf("%s:%s", img.Name, img.Tag)
 }

@@ -41,6 +41,7 @@ script:
     --addition-ns sig-storage
     --addition-ns kas-network-proxy
     --addition-ns build-image
+    --addition-ns ingress-nginx
 
 after_success:
   - bash .travis/travis-after.sh

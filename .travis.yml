@@ -50,3 +50,10 @@ after_success:
 after_failure:
   - bash .travis/travis-after.sh
   - ls -alh ${HOME}/sync/
+
+notifications:
+  email:
+    recipients:
+      - zhangguanzhang@qq.com
+    on_success: never # default: change
+    on_failure: always # default: always

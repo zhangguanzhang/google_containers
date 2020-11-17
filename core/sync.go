@@ -3,13 +3,14 @@ package core
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
 	"os/signal"
 	"sort"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/containers/image/v5/copy"
 	"github.com/containers/image/v5/docker"
@@ -51,7 +52,6 @@ func Run(opt *SyncOption) {
 		log.Error(err)
 	}
 
-
 	if opt.LiveInterval > 0 {
 		if opt.LiveInterval >= 10*time.Minute { //travis-ci 10分钟没任何输出就会被强制关闭
 			opt.LiveInterval = 9 * time.Minute
@@ -76,7 +76,6 @@ func Run(opt *SyncOption) {
 	}
 }
 
-
 func Sync(opt *SyncOption) error {
 	allImages, err := ImageNames(opt)
 	if err != nil {
@@ -88,7 +87,6 @@ func Sync(opt *SyncOption) error {
 	report(imgs)
 	return nil
 }
-
 
 func SyncImages(imgs Images, opt *SyncOption) Images {
 
@@ -187,7 +185,7 @@ func sync2DockerHub(image *Image, opt *SyncOption) error {
 	_, err = copy.Image(ctx, policyContext, destRef, srcRef, &copy.Options{
 		SourceCtx:          sourceCtx,
 		DestinationCtx:     destinationCtx,
-		//ImageListSelection: copy.CopyAllImages,
+		ImageListSelection: copy.CopyAllImages,
 	})
 	log.Debugf("%s copy done, error is %v.", srcImg, err)
 	return err
@@ -237,7 +235,6 @@ func checkSync(image *Image, opt *SyncOption) (uint32, bool) {
 
 	return bodySum, true
 }
-
 
 func report(images Images) {
 

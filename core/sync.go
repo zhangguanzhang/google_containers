@@ -62,7 +62,7 @@ func Run(opt *SyncOption) {
 				case <-opt.Ctx.Done():
 					return
 				case <-time.After(opt.LiveInterval):
-					log.Info("Live output for in travis-ci")
+					log.Info("Live output for live in ci runner")
 				}
 			}
 		}()

@@ -3,7 +3,7 @@ set -e
 docker login -u zhangguanzhang -p ${DOCKER_PASS}
 
 cd $HOME
-mkdir temp
+mkdir -p temp
 cd temp
 
 cp $HOME/sync/bolt.db .

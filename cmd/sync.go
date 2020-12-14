@@ -8,7 +8,6 @@ import (
 	"github.com/zhangguanzhang/google_containers/core"
 )
 
-
 func NewSyncComamnd(Options *core.SyncOption) *cobra.Command {
 	if Options == nil {
 		Options = &core.SyncOption{}
@@ -31,8 +30,6 @@ Sync docker images.`,
 
 	return cmd
 }
-
-
 
 func AddSyncAuthFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 	flagSet.StringVarP(
@@ -80,7 +77,7 @@ func AddSyncLimitFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 	)
 	flagSet.DurationVar(
 		&op.LiveInterval, "live-interval", 0,
-		"live output for travis-ci.",
+		"live output in ci-runner.",
 	)
 	flagSet.IntVar(
 		&op.Retry, "retry", 4,
@@ -94,4 +91,3 @@ func AddSyncLimitFlags(flagSet *flag.FlagSet, op *core.SyncOption) {
 		&op.AdditionNS, "addition-ns", nil,
 		"addition ns to sync")
 }
-

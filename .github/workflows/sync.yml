@@ -1,0 +1,63 @@
+name: sync k8s.gcr.io
+
+on:
+  push:
+    branches: 
+     - test
+     - master
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build
+    env:
+      DOCKER_PASS: ${{ secrets.DOCKER_PASS }} 
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.15
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    - name: install docker
+      uses: docker-practice/actions-setup-docker@master
+
+    - name: before_script
+      run: |
+        bash build/build.sh build
+        bash .github/scripts/ci-before.sh
+        ls -alh ${HOME}/sync/
+        ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
+      env:
+        CGO_ENABLED: 0
+    - name: script
+      id: sync
+      run: |
+        sudo \
+          ${HOME}/sync/imgsync sync \
+          --db ${HOME}/sync/bolt.db \
+          --push-to registry.aliyuncs.com \
+          --password ${{ secrets.PASS }}  \
+          --push-ns=k8sxio  \
+          --user zhangguanzhang@qq.com  \
+          --command-timeout ${TMOUT:=2h}  \
+          --process-limit ${PROCESS:=2} \
+          --img-timeout ${IMG_TMOUT:=10m} \
+          --live-interval ${LIVE:=9m20s}  \
+          --login-retry ${LOGIN_RETRY:=8} \
+          --debug=${DEBUG:=false}
+    - name: after_success
+      run: |
+        bash .github/scripts/ci-after.sh
+        ls -alh ${HOME}/sync/
+        ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
+      if: ${{ steps.sync.conclusion }} == "success"
+    - name: after_failure
+      run: |
+        bash .github/scripts/ci-after.sh
+        ls -alh ${HOME}/sync/
+      if: ${{ steps.sync.conclusion }} != "success"

@@ -6,7 +6,7 @@
 
 本仓库只同步`k8s.gcr.io` ==> `registry.aliyuncs.com/k8sxio`，目前`gcr.io/google_containers`已经不和`k8s.gcr.io`一致了，所以目前只同步`k8s.gcr.io`
 
-目前已经同步完了，可以看[travis-ci的运行状态](https://travis-ci.com/github/zhangguanzhang/google_containers)
+目前已经同步完了，可以看[github action的运行状态](https://github.com/zhangguanzhang/google_containers/actions)
 
 
 查看镜像列表的话去[阿里云镜像仓库市场](https://cr.console.aliyun.com/cn-hangzhou/instances/images) 
@@ -23,7 +23,7 @@
 - 核心拷贝方法引用的[containers/image](https://github.com/containers/image)，部分代码借鉴了[mritd](https://github.com/mritd/imgsync)
 
 - 利用 boltdb 存储每个镜像 manifest 信息的 crc32 校验值，通过比对判断是否需要同步，而不是每次请求目标仓库
-- 把 boltdb 文件放 docker镜像里存在 dockerhub 上，利用 travis 的api来重启 travis-ci 的 runner 来同步
+- 把 boltdb 文件放 docker镜像里存在 dockerhub 上，多次运行 action 来同步
 
 
 ## 用法
@@ -66,7 +66,7 @@ imgsync sync --help
 
 ### 示例
 
-在travis-ci的设置那里设置好环境变量来控制运行的一些属性，也可以把镜像同步到自己的内网仓库上
+那里设置好环境变量来控制运行的一些属性，也可以把镜像同步到自己的内网仓库上
 ```cassandraql
   ${HOME}/sync/imgsync sync 
   --db ${HOME}/sync/bolt.db 

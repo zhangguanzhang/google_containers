@@ -56,9 +56,9 @@ jobs:
         bash .github/scripts/ci-after.sh
         ls -alh ${HOME}/sync/
         ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
-      if: ${{ steps.sync.outcome }} == "success"
+      if: steps.sync.outcome == "success"
     - name: after_failure
       run: |
         bash .github/scripts/ci-after.sh
         ls -alh ${HOME}/sync/
-      if: ${{ steps.sync.outcome }} != "success"
+      if: steps.sync.outcome != "success"

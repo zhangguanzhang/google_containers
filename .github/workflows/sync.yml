@@ -9,8 +9,8 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    name: Build
+  sync:
+    name: sync
     env:
       DOCKER_PASS: ${{ secrets.DOCKER_PASS }} 
     runs-on: ubuntu-latest
@@ -34,8 +34,9 @@ jobs:
         ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
       env:
         CGO_ENABLED: 0
-    - name: script
+    - name: sync run
       id: sync
+      continue-on-error: true
       run: |
         sudo \
           ${HOME}/sync/imgsync sync \
@@ -55,9 +56,9 @@ jobs:
         bash .github/scripts/ci-after.sh
         ls -alh ${HOME}/sync/
         ${HOME}/sync/imgsync sum ${HOME}/sync/bolt.db | wc -l
-      if: ${{ steps.sync.conclusion }} == "success"
+      if: ${{ steps.sync.outcome }} == "success"
     - name: after_failure
       run: |
         bash .github/scripts/ci-after.sh
         ls -alh ${HOME}/sync/
-      if: ${{ steps.sync.conclusion }} != "success"
+      if: ${{ steps.sync.outcome }} != "success"

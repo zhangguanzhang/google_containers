@@ -64,3 +64,9 @@ jobs:
         bash .github/scripts/ci-after.sh
         ls -alh ${HOME}/sync/
       if: steps.sync.outcome != 'success'
+
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 17
+        keep_minimum_runs: 17

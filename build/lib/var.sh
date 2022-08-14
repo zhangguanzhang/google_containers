@@ -20,6 +20,9 @@ GONELIST::getVersion(){
     TAG=$("${git[@]}" describe --tags ${TAG_COMMITID})
   fi
 
+  if [ -z $TAG ];then
+    TAG=v0.0
+  fi
 
   "${git[@]}" checkout $TAG 2>/dev/null
   BUILD_VERSION=${TAG}
